@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::{collections::HashMap, env, fs};
 
 fn main() {
     let input = read_file_from_args();
@@ -57,12 +57,21 @@ fn part_one(left_list: &[u32], right_list: &[u32]) -> u32 {
         .sum()
 }
 
-fn part_two(left_list: &[u32], right_list: &[u32]) -> u32 {
-    left_list
+fn part_two(list_one: &[u32], list_two: &[u32]) -> u32 {
+    // Count occurrences of each value in list_two
+    let mut value_counts = HashMap::<u32, u32>::new();
+    
+    for &val in list_two {
+        *value_counts.entry(val).or_insert(0) += 1;
+    }
+    
+    // Calculate similarity scores
+    list_one
         .iter()
-        .map(|left_val| {
-            let found_count = right_list.iter().filter(|&x| x == left_val).count() as u32;
-            found_count * left_val
+        .map(|&val| {
+            // Get the count of this value in list_two, defaulting to 0
+            let found_count = *value_counts.get(&val).unwrap_or(&0);
+            found_count * val
         })
         .sum()
 }
