@@ -1,7 +1,7 @@
-use std::{collections::HashMap, env, fs};
+use std::collections::HashMap;
 
 fn main() {
-    let input = read_file_from_args();
+    let input = shared::read_file_from_args();
     let (mut left_list, mut right_list) = parse_lists(&input);
     left_list.sort();
     right_list.sort();
@@ -11,14 +11,6 @@ fn main() {
 
     let total_similarity_scores = part_two(&left_list, &right_list);
     println!("Total similarity scores: {}", total_similarity_scores);
-}
-
-fn read_file_from_args() -> String {
-    let filename = env::args()
-        .nth(1)
-        .expect("Please provide a filename as an argument");
-
-    fs::read_to_string(filename).expect("Failed to read file")
 }
 
 fn parse_lists(input: &str) -> (Vec<u32>, Vec<u32>) {

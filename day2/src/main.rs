@@ -1,10 +1,10 @@
-use std::{cmp, env, fs};
+use std::cmp;
 
 type Report = Vec<u8>;
 type ReportList = Vec<Report>;
 
 fn main() {
-    let input = read_file_from_args();
+    let input = shared::read_file_from_args();
     let reports = parse_reports(&input);
 
     let part_one = part_one(&reports);
@@ -12,14 +12,6 @@ fn main() {
 
     let part_two = part_two(&reports);
     println!("Part 2: {}", part_two);
-}
-
-fn read_file_from_args() -> String {
-    let filename = env::args()
-        .nth(1)
-        .expect("Please provide a filename as an argument");
-
-    fs::read_to_string(filename).expect("Failed to read file")
 }
 
 fn parse_reports(input: &str) -> ReportList {
