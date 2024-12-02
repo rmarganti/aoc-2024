@@ -13,6 +13,14 @@ fn main() {
     println!("Total similarity scores: {}", total_similarity_scores);
 }
 
+fn read_file_from_args() -> String {
+    let filename = env::args()
+        .nth(1)
+        .expect("Please provide a filename as an argument");
+
+    fs::read_to_string(filename).expect("Failed to read file")
+}
+
 fn parse_lists(input: &str) -> (Vec<u32>, Vec<u32>) {
     let (mut left_list, mut right_list): (Vec<u32>, Vec<u32>) = input
         .trim()
@@ -41,14 +49,6 @@ fn parse_lists(input: &str) -> (Vec<u32>, Vec<u32>) {
     (left_list, right_list)
 }
 
-fn read_file_from_args() -> String {
-    let filename = env::args()
-        .nth(1)
-        .expect("Please provide a filename as an argument");
-
-    fs::read_to_string(filename).expect("Failed to read file")
-}
-
 fn part_one(left_list: &[u32], right_list: &[u32]) -> u32 {
     left_list
         .iter()
@@ -60,11 +60,11 @@ fn part_one(left_list: &[u32], right_list: &[u32]) -> u32 {
 fn part_two(list_one: &[u32], list_two: &[u32]) -> u32 {
     // Count occurrences of each value in list_two
     let mut value_counts = HashMap::<u32, u32>::new();
-    
+
     for &val in list_two {
         *value_counts.entry(val).or_insert(0) += 1;
     }
-    
+
     // Calculate similarity scores
     list_one
         .iter()
@@ -81,13 +81,13 @@ mod tests {
     use super::*;
 
     const EXAMPLE_INPUT: &str = r#"
-    3   4
-    4   3
-    2   5
-    1   3
-    3   9
-    3   3
-        "#;
+        3   4
+        4   3
+        2   5
+        1   3
+        3   9
+        3   3
+    "#;
 
     #[test]
     fn part_one_works_on_the_example_input() {
