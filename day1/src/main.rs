@@ -1,3 +1,5 @@
+use std::{env, fs};
+
 fn main() {
     let input = read_file_from_args();
     let (mut left_list, mut right_list) = parse_lists(&input);
@@ -40,12 +42,11 @@ fn parse_lists(input: &str) -> (Vec<u32>, Vec<u32>) {
 }
 
 fn read_file_from_args() -> String {
-    let args = std::env::args().collect::<Vec<String>>();
-    let filename = args
-        .get(1)
+    let filename = env::args()
+        .nth(1)
         .expect("Please provide a filename as an argument");
 
-    std::fs::read_to_string(filename).expect("Failed to read file")
+    fs::read_to_string(filename).expect("Failed to read file")
 }
 
 fn part_one(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
