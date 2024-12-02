@@ -21,14 +21,14 @@ fn parse_lists(input: &str) -> (Vec<u32>, Vec<u32>) {
             let line = line.trim();
             let mut pieces = line.split_whitespace();
 
-            let left = pieces
+            let left: u32 = pieces
                 .next()
-                .and_then(|x| x.parse::<u32>().ok())
+                .and_then(|x| x.parse().ok())
                 .expect("Invalid first item");
 
-            let right = pieces
+            let right: u32 = pieces
                 .next()
-                .and_then(|x| x.parse::<u32>().ok())
+                .and_then(|x| x.parse().ok())
                 .expect("Invalid second item");
 
             (left, right)
@@ -49,7 +49,7 @@ fn read_file_from_args() -> String {
     fs::read_to_string(filename).expect("Failed to read file")
 }
 
-fn part_one(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
+fn part_one(left_list: &[u32], right_list: &[u32]) -> u32 {
     left_list
         .iter()
         .zip(right_list)
@@ -57,7 +57,7 @@ fn part_one(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
         .sum()
 }
 
-fn part_two(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
+fn part_two(left_list: &[u32], right_list: &[u32]) -> u32 {
     left_list
         .iter()
         .map(|left_val| {
