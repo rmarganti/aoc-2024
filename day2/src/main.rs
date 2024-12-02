@@ -58,51 +58,37 @@ enum ReportType {
 
 fn is_valid_report(report: &Report) -> bool {
     let mut report_type = ReportType::Unknown;
-    let mut previous: Option<&u8> = None;
 
-    for level in report {
-        match previous {
-            None => previous = Some(level),
-            Some(prev) => {
-                let detected_report_type = match prev.cmp(level) {
-                    cmp::Ordering::Less => ReportType::Increasing,
-                    cmp::Ordering::Equal => report_type.clone(),
-                    cmp::Ordering::Greater => ReportType::Decreasing,
-                };
+    report.windows(2).all(|window| {
+        let [first, second] = window else {
+            return false;
+        };
 
-                match (&report_type, &detected_report_type) {
-                    (ReportType::Unknown, _) => report_type = detected_report_type,
-                    (ReportType::Increasing, ReportType::Increasing) => {}
-                    (ReportType::Decreasing, ReportType::Decreasing) => {}
-                    _ => return false,
-                }
+        let detected_report_type = match first.cmp(&second) {
+            cmp::Ordering::Less => ReportType::Increasing,
+            cmp::Ordering::Equal => report_type.clone(),
+            cmp::Ordering::Greater => ReportType::Decreasing,
+        };
 
-                let difference = prev.abs_diff(*level);
-
-                if difference < 1 || difference > 3 {
-                    return false;
-                }
-
-                previous = Some(level);
-            }
+        match (&report_type, &detected_report_type) {
+            (ReportType::Unknown, _) => report_type = detected_report_type,
+            (ReportType::Increasing, ReportType::Increasing) => {}
+            (ReportType::Decreasing, ReportType::Decreasing) => {}
+            _ => return false,
         }
-    }
 
-    true
+        let difference = first.abs_diff(*second);
+
+        difference >= 1 && difference <= 3
+    })
 }
 
 fn is_valid_report_with_dampener(report: &Report) -> bool {
-    for (index, _level) in report.iter().enumerate() {
+    report.iter().enumerate().any(|(index, _level)| {
         let mut report_without_level = report.clone();
         report_without_level.remove(index);
-        let is_valid = is_valid_report(&report_without_level);
-
-        if is_valid {
-            return true;
-        }
-    }
-
-    false
+        is_valid_report(&report_without_level)
+    })
 }
 
 #[cfg(test)]
