@@ -9,6 +9,9 @@ fn main() {
 
     let part_one = part_one(&reports);
     println!("Part 1: {}", part_one);
+
+    let part_two = part_two(&reports);
+    println!("Part 2: {}", part_two);
 }
 
 fn read_file_from_args() -> String {
@@ -36,6 +39,13 @@ fn part_one(reports: &ReportList) -> usize {
     reports
         .iter()
         .filter(|report| is_valid_report(*report))
+        .count()
+}
+
+fn part_two(reports: &ReportList) -> usize {
+    reports
+        .iter()
+        .filter(|report| is_valid_report(*report) || is_valid_report_with_dampener(*report))
         .count()
 }
 
@@ -81,6 +91,20 @@ fn is_valid_report(report: &Report) -> bool {
     true
 }
 
+fn is_valid_report_with_dampener(report: &Report) -> bool {
+    for (index, _level) in report.iter().enumerate() {
+        let mut report_without_level = report.clone();
+        report_without_level.remove(index);
+        let is_valid = is_valid_report(&report_without_level);
+
+        if is_valid {
+            return true;
+        }
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -99,5 +123,12 @@ mod test {
         let reports = parse_reports(EXAMPLE_INPUT);
         let valid_reports = part_one(&reports);
         assert_eq!(valid_reports, 2);
+    }
+
+    #[test]
+    fn part_two_works_on_the_example_input() {
+        let reports = parse_reports(EXAMPLE_INPUT);
+        let valid_reports = part_two(&reports);
+        assert_eq!(valid_reports, 4);
     }
 }
