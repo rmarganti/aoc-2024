@@ -8,4 +8,4 @@ target/
 
 # The AOC inputs. These should not be committed, because they can provide some
 # information on how the puzzles were seeded.
-./inputs/
+inputs/
