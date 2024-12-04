@@ -16,11 +16,13 @@ fn main() {
 fn part_one(puzzle: &Puzzle) -> usize {
     puzzle
         .iter_coords()
-        .fold(0, |acc, (x, y)| acc + puzzle.count_xmas_instances_at(x, y))
+        .fold(0, |acc, coord| acc + puzzle.count_xmas_instances_at(coord))
 }
 
-fn part_two(input: &Puzzle) -> usize {
-    0
+fn part_two(puzzle: &Puzzle) -> usize {
+    puzzle.iter_coords().fold(0, |acc, coord| {
+        acc + if puzzle.has_mas_cross_at(coord) { 1 } else { 0 }
+    })
 }
 
 fn parse_input(input: &str) -> Puzzle {
@@ -62,6 +64,6 @@ mod tests {
         let puzzle = parse_input(INPUT.trim());
         let result = part_two(&puzzle);
 
-        assert_eq!(result, 0);
+        assert_eq!(result, 9);
     }
 }

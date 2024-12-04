@@ -27,22 +27,30 @@ impl Puzzle {
     }
 
     pub fn width(&self) -> usize {
+        if self.data.is_empty() {
+            return 0;
+        }
+
         self.data[0].len()
     }
 
-    pub fn iter_coords(&self) -> PuzzleIterator {
-        PuzzleIterator {
+    /// Create an iterator that will iterate over all
+    /// valid coordinates in the Puzzle.
+    pub fn iter_coords(&self) -> PuzzleCoordIterator {
+        PuzzleCoordIterator {
             puzzle: self,
-            row: 0,
-            col: 0,
+            next_y: 0,
+            next_x: 0,
         }
     }
 
-    pub fn count_xmas_instances_at(&self, x: usize, y: usize) -> usize {
+    /// Count the number of instances of the word "XMAS" that start at the
+    /// given coordinates.
+    pub fn count_xmas_instances_at(&self, coord: Coord) -> usize {
         let mut count = 0;
 
         for (dx, dy) in &DIRECTIONS {
-            if self.has_xmas_in_direction(x, y, *dx, *dy) {
+            if self.has_xmas_in_direction(coord, *dx, *dy) {
                 count += 1;
             }
         }
@@ -50,8 +58,14 @@ impl Puzzle {
         count
     }
 
-    fn has_xmas_in_direction(&self, x: usize, y: usize, dx: i8, dy: i8) -> bool {
-        let mut current_coord = (x, y);
+    /// Determine the word "XMAS" stats at the coords, moving in the direction
+    /// defined by dx and dy.
+    ///
+    /// @param coord The starting coordinate
+    /// @param dx The x direction to move in (1, 0, -1)
+    /// @param dy The y direction to move in (1, 0, -1)
+    fn has_xmas_in_direction(&self, coord: Coord, dx: i8, dy: i8) -> bool {
+        let mut current_coord: Coord = (coord.0, coord.1);
 
         for search_char_idx in 0..SEARCH_STRING.len() {
             let expected_char = SEARCH_STRING
@@ -85,33 +99,79 @@ impl Puzzle {
 
         false
     }
-}
 
-impl ops::Index<(usize, usize)> for Puzzle {
-    type Output = char;
+    /// Determine if there is an X formed by two instances of "MAS" at the
+    /// given Coord. The Coord is defined by the center position of the 'A'.
+    pub fn has_mas_cross_at(&self, coord: Coord) -> bool {
+        if self[coord] != 'A'
+            || coord.0 == 0
+            || coord.1 == 0
+            || coord.0 == self.width() - 1
+            || coord.1 == self.height() - 1
+        {
+            return false;
+        }
 
-    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        &self.data[col][row]
+        let top_left_char = self[(coord.0 - 1, coord.1 - 1)];
+        let top_right_char = self[(coord.0 + 1, coord.1 - 1)];
+        let bottom_left_char = self[(coord.0 - 1, coord.1 + 1)];
+        let bottom_right_char = self[(coord.0 + 1, coord.1 + 1)];
+
+        let right_down: u8 = if top_left_char == 'M' && bottom_right_char == 'S' {
+            1
+        } else {
+            0
+        };
+
+        let right_up: u8 = if bottom_left_char == 'M' && top_right_char == 'S' {
+            1
+        } else {
+            0
+        };
+
+        let left_down: u8 = if top_right_char == 'M' && bottom_left_char == 'S' {
+            1
+        } else {
+            0
+        };
+
+        let left_up: u8 = if bottom_right_char == 'M' && top_left_char == 'S' {
+            1
+        } else {
+            0
+        };
+
+        right_down + right_up + left_down + left_up >= 2
     }
 }
 
-pub struct PuzzleIterator<'a> {
-    puzzle: &'a Puzzle,
-    row: usize,
-    col: usize,
+impl ops::Index<Coord> for Puzzle {
+    type Output = char;
+
+    fn index(&self, (x, y): Coord) -> &Self::Output {
+        &self.data[y][x]
+    }
 }
 
-impl<'a> Iterator for PuzzleIterator<'a> {
+/// Iterates over all valid coordinates in the Puzzle. It will iterate
+/// over all x values in a row before moving to the next row.
+pub struct PuzzleCoordIterator<'a> {
+    puzzle: &'a Puzzle,
+    next_x: usize,
+    next_y: usize,
+}
+
+impl<'a> Iterator for PuzzleCoordIterator<'a> {
     type Item = Coord;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.row < self.puzzle.height() {
-            let result = Some((self.col, self.row));
+        if self.next_y < self.puzzle.height() {
+            let result = Some((self.next_x, self.next_y));
 
-            self.col += 1;
-            if self.col >= self.puzzle.width() {
-                self.col = 0;
-                self.row += 1;
+            self.next_x += 1;
+            if self.next_x >= self.puzzle.width() {
+                self.next_x = 0;
+                self.next_y += 1;
             }
 
             result
