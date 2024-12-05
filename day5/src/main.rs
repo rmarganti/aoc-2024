@@ -33,7 +33,7 @@ fn part_two(puzzle: &Puzzle) -> usize {
     sum_middle_values(&sorted_updates)
 }
 
-fn sum_middle_values(updates: &Vec<Update>) -> usize {
+fn sum_middle_values(updates: &[Update]) -> usize {
     updates
         .iter()
         .map(|update| update.pages[(update.pages.len() - 1) / 2])
@@ -89,11 +89,13 @@ struct Update {
 
 impl Update {
     fn is_valid(&self, rules: &[PageRule]) -> bool {
-        self.pages.iter().enumerate().all(|(page_idx, page)| {
-            let mut applicable_rules = rules.iter().filter(|rule| rule.0 == *page);
-            applicable_rules.all(|rule| {
-                let rule_idx = self.pages.iter().position(|n| *n == rule.1);
-                rule_idx.map(|idx| page_idx < idx).unwrap_or(true)
+        self.pages.iter().enumerate().all(|(page_idx, &page)| {
+            rules.iter().filter(|rule| rule.0 == page).all(|rule| {
+                self.pages
+                    .iter()
+                    .position(|&n| n == rule.1)
+                    .map(|idx| page_idx < idx)
+                    .unwrap_or(true)
             })
         })
     }
@@ -101,9 +103,9 @@ impl Update {
     fn clone_and_sort(&self, rules: &[PageRule]) -> Update {
         let mut pages = self.pages.clone();
 
-        pages.sort_by(|a, b| {
+        pages.sort_by(|&a, &b| {
             // Find a rule that applies to the pages being compared
-            let rule = rules.iter().find(|rule| rule.0 == *a && rule.1 == *b);
+            let rule = rules.iter().find(|rule| rule.0 == a && rule.1 == b);
 
             match rule {
                 Some(_) => cmp::Ordering::Less,
