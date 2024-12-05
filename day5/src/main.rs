@@ -12,32 +12,26 @@ fn main() {
 }
 
 fn part_one(puzzle: &Puzzle) -> usize {
-    let valid_updates: Vec<Update> = puzzle
+    puzzle
         .updates
         .iter()
         .filter(|update| update.is_valid(&puzzle.rules))
-        .map(|update| update.clone())
-        .collect();
-
-    sum_middle_values(&valid_updates)
+        .map(middle_value)
+        .sum()
 }
 
 fn part_two(puzzle: &Puzzle) -> usize {
-    let sorted_updates: Vec<Update> = puzzle
+    puzzle
         .updates
         .iter()
         .filter(|update| !update.is_valid(&puzzle.rules))
         .map(|update| update.clone_and_sort(&puzzle.rules))
-        .collect();
-
-    sum_middle_values(&sorted_updates)
+        .map(|update| middle_value(&update))
+        .sum()
 }
 
-fn sum_middle_values(updates: &[Update]) -> usize {
-    updates
-        .iter()
-        .map(|update| update.pages[(update.pages.len() - 1) / 2])
-        .sum()
+fn middle_value(update: &Update) -> usize {
+    update.pages[(update.pages.len() - 1) / 2]
 }
 
 #[derive(Debug)]
