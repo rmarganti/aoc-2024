@@ -44,7 +44,13 @@ dependencies = [
 name = "day5"
 version = "0.1.0"
 dependencies = [
- "regex",
+ "shared",
+]
+
+[[package]]
+name = "day6"
+version = "0.1.0"
+dependencies = [
  "shared",
 ]
 
