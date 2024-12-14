@@ -7,32 +7,44 @@ fn main() {
     let part_one = part_one(&state);
     println!("part one: {}", part_one);
 
-    let part_two = part_two();
+    let part_two = part_two(&state);
     println!("part one: {}", part_two);
 }
 
+/// How many unique positions does the Guard visit before exiting the map?
 fn part_one(state: &State) -> usize {
-    let mut guard = state.guard.clone();
-    // Keep a list of all the unique visited coordinates.
-    let mut unique_points: HashSet<(isize, isize)> = [guard.position].into();
+    let result = state.map.execute(&state.guard);
 
-    loop {
-        let next_guard_state = guard.step(&state.map);
-
-        match next_guard_state {
-            Some(next_guard_state) => {
-                unique_points.insert(next_guard_state.position);
-                guard = next_guard_state;
-            }
-            None => break,
-        }
+    match result {
+        MapResult::Exited { unique_visits } => unique_visits.len(),
+        MapResult::Loop => panic!("unexpected loop in part_one"),
     }
-
-    unique_points.len()
 }
 
-fn part_two() -> usize {
-    todo!()
+/// How many positions can we place a new obstacle and get the Guard
+/// stuck in a loop? We cannot put a new obstacle on the initial position
+/// of the Guard, because he would notice.
+fn part_two(state: &State) -> usize {
+    let initial_positions = match state.map.execute(&state.guard) {
+        MapResult::Exited { unique_visits } => unique_visits,
+        MapResult::Loop => panic!("unexpected loop in part_two"),
+    };
+
+    let loop_count = initial_positions
+        .iter()
+        .skip(1)
+        .filter(|position| {
+            let new_map = state.map.with_obstacle(position.0, position.1);
+            let result = new_map.execute(&state.guard);
+
+            match result {
+                MapResult::Exited { .. } => false,
+                MapResult::Loop => true,
+            }
+        })
+        .count();
+
+    loop_count
 }
 
 #[derive(Debug)]
@@ -109,12 +121,68 @@ struct Map {
 }
 
 impl Map {
+    fn execute(&self, guard: &Guard) -> MapResult {
+        let mut current_guard_state = guard.clone();
+        let mut unique_visits = HashSet::<(isize, isize)>::from([current_guard_state.position]);
+        let mut unique_guard_states = HashSet::<(isize, isize, Direction)>::from([(
+            current_guard_state.position.0,
+            current_guard_state.position.1,
+            current_guard_state.direction.clone(),
+        )]);
+
+        loop {
+            let next_guard_state = current_guard_state.step(self);
+
+            match next_guard_state {
+                Some(next_guard_state) => {
+                    unique_visits.insert(next_guard_state.position);
+
+                    if unique_guard_states.contains(&(
+                        next_guard_state.position.0,
+                        next_guard_state.position.1,
+                        next_guard_state.direction.clone(),
+                    )) {
+                        return MapResult::Loop;
+                    }
+
+                    unique_guard_states.insert((
+                        next_guard_state.position.0,
+                        next_guard_state.position.1,
+                        next_guard_state.direction.clone(),
+                    ));
+
+                    current_guard_state = next_guard_state;
+                }
+                None => break,
+            }
+        }
+
+        MapResult::Exited { unique_visits }
+    }
+
     fn is_obstacle(&self, x: isize, y: isize) -> bool {
         match self.obstacles.get(&x) {
             Some(row) => row.contains_key(&y),
             None => false,
         }
     }
+
+    fn with_obstacle(&self, x: isize, y: isize) -> Self {
+        let mut obstacles = self.obstacles.clone();
+        obstacles.entry(x).or_insert(HashMap::new()).insert(y, true);
+        Map {
+            width: self.width,
+            height: self.height,
+            obstacles,
+        }
+    }
+}
+
+enum MapResult {
+    Exited {
+        unique_visits: HashSet<(isize, isize)>,
+    },
+    Loop,
 }
 
 #[derive(Debug, Clone)]
@@ -163,7 +231,7 @@ impl Guard {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Down,
@@ -199,7 +267,8 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let result = part_two();
+        let state = State::from(INPUT);
+        let result = part_two(&state);
 
         assert_eq!(result, 6);
     }
