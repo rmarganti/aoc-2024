@@ -124,11 +124,7 @@ impl Map {
     fn execute(&self, guard: &Guard) -> MapResult {
         let mut current_guard_state = guard.clone();
         let mut unique_visits = HashSet::<(isize, isize)>::from([current_guard_state.position]);
-        let mut unique_guard_states = HashSet::<(isize, isize, Direction)>::from([(
-            current_guard_state.position.0,
-            current_guard_state.position.1,
-            current_guard_state.direction.clone(),
-        )]);
+        let mut unique_guard_states = HashSet::<Guard>::from([current_guard_state.clone()]);
 
         loop {
             let next_guard_state = current_guard_state.step(self);
@@ -137,20 +133,11 @@ impl Map {
                 Some(next_guard_state) => {
                     unique_visits.insert(next_guard_state.position);
 
-                    if unique_guard_states.contains(&(
-                        next_guard_state.position.0,
-                        next_guard_state.position.1,
-                        next_guard_state.direction.clone(),
-                    )) {
+                    if unique_guard_states.contains(&next_guard_state) {
                         return MapResult::Loop;
                     }
 
-                    unique_guard_states.insert((
-                        next_guard_state.position.0,
-                        next_guard_state.position.1,
-                        next_guard_state.direction.clone(),
-                    ));
-
+                    unique_guard_states.insert(next_guard_state.clone());
                     current_guard_state = next_guard_state;
                 }
                 None => break,
@@ -185,7 +172,7 @@ enum MapResult {
     Loop,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 struct Guard {
     direction: Direction,
     position: (isize, isize),
