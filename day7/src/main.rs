@@ -62,13 +62,8 @@ fn all_possible_outputs(inputs: &[usize], allow_concat: bool) -> Vec<usize> {
 /// 2, 4 -> 24
 /// 10, 5 -> 105
 fn concat_number_strings(a: usize, b: usize) -> usize {
-    let mut offset = 1;
-
-    while offset <= b {
-        offset *= 10;
-    }
-
-    a * offset + b
+    // Multiply a by 10^b's digit
+    a * 10usize.pow(b.ilog10() + 1) + b
 }
 
 #[derive(Debug)]
