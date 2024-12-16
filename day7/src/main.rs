@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 fn main() {
     let input = shared::read_file_from_args();
     let puzzle = Puzzle::from(input.as_str());
@@ -12,27 +10,19 @@ fn main() {
 }
 
 fn part_one(puzzle: &Puzzle) -> usize {
-    filter_for_valid_test_values(puzzle, false)
-        .data
-        .keys()
-        .sum()
+    solve_puzzle(puzzle, false)
 }
 
 fn part_two(puzzle: &Puzzle) -> usize {
-    filter_for_valid_test_values(puzzle, true).data.keys().sum()
+    solve_puzzle(puzzle, true)
 }
 
-fn filter_for_valid_test_values(puzzle: &Puzzle, allow_concat: bool) -> Puzzle {
-    let data = puzzle
+fn solve_puzzle(puzzle: &Puzzle, allow_concat: bool) -> usize {
+    puzzle
         .data
         .iter()
-        .filter(|(&key, val)| has_valid_operator_combo(key, val, allow_concat))
-        .fold(HashMap::default(), |mut acc, (&key, val)| {
-            acc.insert(key, val.to_vec());
-            acc
-        });
-
-    Puzzle { data }
+        .filter(|(test_value, inputs)| has_valid_operator_combo(*test_value, inputs, allow_concat))
+        .fold(0, |acc, (test_value, _)| acc + test_value)
 }
 
 fn has_valid_operator_combo(test_value: usize, inputs: &[usize], allow_concat: bool) -> bool {
@@ -54,47 +44,56 @@ fn has_valid_operator_combo(test_value: usize, inputs: &[usize], allow_concat: b
 /// Final result:
 /// vec![6, 9, 5, 6]
 fn all_possible_outputs(inputs: &[usize], allow_concat: bool) -> Vec<usize> {
-    inputs.iter().fold(vec![0], |acc, &val| {
-        let mut new_acc = vec![];
-        for &acc_val in acc.iter() {
-            new_acc.push(acc_val + val);
-            new_acc.push(acc_val * val);
+    inputs.iter().fold(vec![0], |outputs, &val| {
+        let mut new_outputs = vec![];
+        for &acc_val in outputs.iter() {
+            new_outputs.push(acc_val + val);
+            new_outputs.push(acc_val * val);
 
             if allow_concat {
-                new_acc.push(concat_number_strings(acc_val, val));
+                new_outputs.push(concat_number_strings(acc_val, val));
             }
         }
-        new_acc
+        new_outputs
     })
 }
 
+/// Concatenate two numbers together. For example:
+/// 2, 4 -> 24
+/// 10, 5 -> 105
 fn concat_number_strings(a: usize, b: usize) -> usize {
-    format!("{}{}", a, b)
-        .parse()
-        .expect("Unable to parse concatenated number")
+    let mut offset = 1;
+
+    while offset <= b {
+        offset *= 10;
+    }
+
+    a * offset + b
 }
 
 #[derive(Debug)]
 struct Puzzle {
-    data: HashMap<usize, Vec<usize>>,
+    data: Vec<(usize, Vec<usize>)>,
 }
 
 impl From<&str> for Puzzle {
     fn from(input: &str) -> Puzzle {
-        let mut data = HashMap::default();
+        let data = input
+            .trim()
+            .lines()
+            .map(|line| {
+                let line = line.trim();
+                let (test_value, inputs) = line.split_once(": ").expect("Invalid puzzle line");
 
-        for line in input.trim().lines() {
-            let line = line.trim();
-            let (test_value, inputs) = line.split_once(": ").expect("Invalid puzzle line");
+                let test_value = test_value.parse().expect("Unable to parse test value");
+                let inputs = inputs
+                    .split_whitespace()
+                    .map(|val| val.parse().expect("Unable to parse input value"))
+                    .collect();
 
-            let test_value: usize = test_value.parse().expect("Unable to parse test value");
-            let inputs: Vec<usize> = inputs
-                .split_whitespace()
-                .map(|val| val.parse().expect("Unable to parse input value"))
-                .collect();
-
-            data.insert(test_value, inputs);
-        }
+                (test_value, inputs)
+            })
+            .collect();
 
         Puzzle { data }
     }
