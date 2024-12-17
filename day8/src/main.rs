@@ -17,15 +17,9 @@ fn part_one(puzzle: &Puzzle) -> usize {
         .iter()
         .fold(HashSet::new(), |mut acc, antenna_type| {
             let positions = puzzle.all_coords_for_antenna(*antenna_type);
-            let pairs = positions.iter().enumerate().flat_map(|(i, position1)| {
-                positions
-                    .iter()
-                    .skip(i + 1)
-                    .map(|position2| (position1.clone(), position2.clone()))
-            });
 
-            pairs
-                .flat_map(|pair| antinodes_for_pair(puzzle, &pair))
+            iterate_pairs(&positions)
+                .flat_map(|pair| antinodes_for_pair(puzzle, pair))
                 .for_each(|pos| {
                     acc.insert(pos);
                 });
@@ -41,15 +35,9 @@ fn part_two(puzzle: &Puzzle) -> usize {
         .iter()
         .fold(HashSet::new(), |mut acc, antenna_type| {
             let positions = puzzle.all_coords_for_antenna(*antenna_type);
-            let pairs = positions.iter().enumerate().flat_map(|(i, position1)| {
-                positions
-                    .iter()
-                    .skip(i + 1)
-                    .map(|position2| (position1.clone(), position2.clone()))
-            });
 
-            pairs
-                .flat_map(|pair| antinodes_for_pair_with_resonant_freqs(puzzle, &pair))
+            iterate_pairs(&positions)
+                .flat_map(|pair| antinodes_for_pair_with_resonant_freqs(puzzle, pair))
                 .for_each(|pos| {
                     acc.insert(pos);
                 });
@@ -59,10 +47,35 @@ fn part_two(puzzle: &Puzzle) -> usize {
         .len()
 }
 
+/// Create an iterator that yields all possible pairs of items in a Vec/array.
+///
+/// # Example
+///
+/// ```
+/// let positions = vec![(0, 0), (1, 1), (2, 2)];
+/// let mut pairs = iterate_pairs(&positions);
+/// ```
+///
+/// The iterator will yield the following pairs:
+/// - (0, 0), (1, 1)
+/// - (0, 0), (2, 2)
+/// - (1, 1), (2, 2)
+/// ```
+fn iterate_pairs<'a, T>(positions: &'a [T]) -> impl Iterator<Item = (&'a T, &'a T)> + 'a {
+    positions.iter().enumerate().flat_map(|(i, position1)| {
+        positions
+            .iter()
+            .skip(i + 1)
+            .map(move |position2| (position1, position2))
+    })
+}
+
 /// Find all positions that are exactly twice the distance from one point as they are from the
 /// other point. Antinodes cannot exist outside the dimensions of the Puzzle.
 ///
-/// Example. `#` represents the antinodes for antenna `a`.
+/// # Example
+///
+/// `#` represents the antinodes for antenna `a`.
 ///
 /// ..........
 /// ...#......
@@ -74,7 +87,7 @@ fn part_two(puzzle: &Puzzle) -> usize {
 /// ......#...
 /// ..........
 /// ..........
-fn antinodes_for_pair(puzzle: &Puzzle, pair: &(XY, XY)) -> Vec<XY> {
+fn antinodes_for_pair(puzzle: &Puzzle, pair: (&XY, &XY)) -> Vec<XY> {
     let ((x1, y1), (x2, y2)) = pair;
 
     let dx = *x2 as isize - *x1 as isize;
@@ -103,7 +116,9 @@ fn antinodes_for_pair(puzzle: &Puzzle, pair: &(XY, XY)) -> Vec<XY> {
 
 /// Find all positions that are an interval of the distance between two points.
 ///
-/// Example. `#` represents the antinodes for antenna `T`.
+/// # Example
+///
+/// `#` represents the antinodes for antenna `T`.
 ///
 /// T....#....
 /// ...T......
@@ -115,7 +130,7 @@ fn antinodes_for_pair(puzzle: &Puzzle, pair: &(XY, XY)) -> Vec<XY> {
 /// ..........
 /// ....#.....
 /// ..........
-fn antinodes_for_pair_with_resonant_freqs(puzzle: &Puzzle, pair: &(XY, XY)) -> Vec<XY> {
+fn antinodes_for_pair_with_resonant_freqs(puzzle: &Puzzle, pair: (&XY, &XY)) -> Vec<XY> {
     let ((x1, y1), (x2, y2)) = pair;
 
     let dx = *x2 as isize - *x1 as isize;
@@ -176,10 +191,6 @@ struct Puzzle {
 }
 
 impl Puzzle {
-    fn get(&self, x: usize, y: usize) -> Option<&char> {
-        self.data.get(&(x, y))
-    }
-
     // Get the unique antenna types in the puzzle
     fn antenna_types(&self) -> HashSet<char> {
         self.data.values().copied().collect()
